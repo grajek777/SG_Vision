@@ -255,9 +255,8 @@ class App(tk.Frame):
         #enable widgets
         self.TP_button.config(state="normal")
         self.TopLEDSlider.config(state="normal")
-        #self.SideLEDSlider.config(state="normal")
-        #FROI_button.config(state="disabled")
-    
+
+
     def TakePhoto_callback(self):
         temp_image = self.camera.takePhoto(self.savePhoto.get())
         cam_util.show_frame(temp_image, self.roi, self.lmain)
@@ -266,15 +265,19 @@ class App(tk.Frame):
         self.ResultLabel.config(text=MFColor, fg="black")
         self.SaturationLabel.config(text="{:.2f}".format(Saturation), fg="black")
     
+
     def TopLEDSlider_callback(self, arg1):
         self.pi.set_PWM_dutycycle(self.LED_Pin_Top, arg1)
     
+
     def MCSpeedSlider_callback(self, arg1):
         self.motorController.setTargetMotorVelo(int(arg1))
     
+
     def MCDirRadio_callback(self):
         self.motorController.updateMotorDirection(self.dir_var.get())
-        
+
+
     def MCEnergize_callback(self):
         if(self.energize_button_text.get() == "Energize"):
             self.motorController.energizeMotor()
@@ -282,12 +285,14 @@ class App(tk.Frame):
         elif(self.energize_button_text.get() == "Deenergize"):
             self.motorController.deenergizeMotor()
             self.energize_button_text.set("Energize")
-    
+
+
     def comboSelection_callback(self, arg):
         expertSys = self.box.get()
         print("{0} creation".format(expertSys))
         # TODO: creation of proper Expert system
-    
+
+
     def Relay_callback(self):
         if(self.Relay_button_text.get() == "Air on"):
             self.pi.write(self.Relay_Pin, 0)
@@ -295,6 +300,7 @@ class App(tk.Frame):
         elif(self.Relay_button_text.get() == "Air off"):
             self.pi.write(self.Relay_Pin, 1)
             self.Relay_button_text.set("Air on")
+
 
 if __name__ == '__main__':
     # Set up GUI
