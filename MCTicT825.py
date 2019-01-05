@@ -87,7 +87,7 @@ class MCTicT825(ConstTicT825):
         self.mc.write_i2c_block_data(self.i2c_addr, cmd, list)
     
     def setTargetPosition(self, position):
-        self.write32Bit(self.i2c_addr, self.SET_TARGET_POSTION, position)
+        self.write32Bit(self.SET_TARGET_POSTION, position)
 
     def setTargetVelocity(self, velocity):
         self.write32Bit(self.SET_TARGET_VELOCITY, velocity)
@@ -141,3 +141,23 @@ class MCTicT825(ConstTicT825):
     def setDecayMode(self, mode):
         dict = {'Mixed': 0, 'Slow': 1, 'Fast': 2}
         self.mc.write_byte_data(self.i2c_addr, self.SET_DECAY_MODE, dict[mode])
+
+    def getVariablesBlock(self, length):
+        return self.mc.read_i2c_block_data(self.i2c_addr, self.GET_VARIABLE, length)
+        #return self.mc.read_i2c_block_data(self.i2c_addr, 0x00)
+    
+    def getVariableByte(self):
+        return self.mc.read_byte_data(self.i2c_addr, self.GET_VARIABLE)
+    
+    def getVariableWord(self):
+        return self.mc.read_word_data(self.i2c_addr, self.GET_VARIABLE)
+
+    def getCurrentPosition(self):
+        self.mc.write_i2c_block_data(self.i2c_addr, self.GET_VARIABLE, [0x22])
+        #self.mc.write_word_data(self.i2c_addr, self.GET_VARIABLE, 34)
+        #self.write32Bit(self.GET_VARIABLE, 34) #set offset for GET_VARIABLE command
+        dataBlock = self.getVariablesBlock(4)
+        #dataBlock = self.getVariableWord()
+        print(dataBlock)
+        return dataBlock
+    

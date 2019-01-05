@@ -10,6 +10,7 @@ class MotorController(object):
         try:
             self.ticT825 = MCTicT825(MC_i2c_addr)
             self.velocity = 0
+            self.position = 0
             self.direction = 'down'
             self.keep_alive = keep_alive
             # run thread that prevent cmd timeout error
@@ -39,9 +40,27 @@ class MotorController(object):
         self.velocity = velocity
         self.ticT825.setTargetVelocity(self.dir_factor[self.direction]*self.velocity)
     
+    def setTargetPosition(self, pos):
+        self.position = pos
+        
+    def goToTargetPosition(self, pos):
+        self.setTargetPosition(pos)
+        self.ticT825.setTargetPosition(self.position)
+        
+    def goToTargetPositionProcedure(self, pos):
+        if not(pos==0):
+            self.energizeMotor()
+        time.sleep(0.2)
+        self.goToTargetPosition(pos)
+        #self.ticT825.getCurrentPosition()
+        time.sleep(10.0) 
+        self.ticT825.getCurrentPosition()
+        if pos==0:
+            self.deenergizeMotor()
+        
     def updateMotorDirection(self, dir):
         self.direction = dir
-        self.ticT825.setTargetVelocity(self.dir_factor[self.direction]*self.velocity)
+        self.setTargetMotorVelo(self.velocity)
     
     def shutdown(self):
         if self.keepAliveThread:
@@ -50,6 +69,8 @@ class MotorController(object):
         
         self.setTargetMotorVelo(0)
         self.updateMotorDirection('down')
+        if not(self.position==0):
+            self.goToTargetPositionProcedure(0)
         self.deenergizeMotor()
         self.ticT825.close()   
          

@@ -6,6 +6,8 @@ import Tkinter as tk
 import numpy as np
 import ttk
 import os
+import time
+import threading
 
 from PIL import Image, ImageTk
 from Camera import *
@@ -19,6 +21,34 @@ from Tix import Tk
 #import pydevd
 #pydevd.settrace('192.168.1.103') # replace IP with address 
                                  # of Eclipse host machine
+
+class relayThread (threading.Thread):
+    def __init__(self, gpio, pin, button_text, stop_event, delay=(2.0*60.0), debug=False):
+        threading.Thread.__init__(self)
+        self.delay = delay
+        self.gpio = gpio
+        self.pin = pin
+        self.button_text = button_text
+        self.stop_event = stop_event
+        self.debug = debug
+     
+    def waitTime(self):
+        for i in range(int(self.delay*2)):
+            if self.debug:
+                print "%s" % (0.5*i)
+            time.sleep(0.5)
+            if self.stop_event.is_set():
+                break
+        self.button_text.set("Air on")
+        self.gpio.write(self.pin, 1)
+        self.stop_event.clear()
+    
+    #def stop(self):
+    #    self.thread_active = False
+        
+    def run(self):
+        self.waitTime()
+
 
 class LogoScreen(tk.Toplevel):
     def __init__(self,master=None, logo=None):
@@ -54,6 +84,13 @@ class App(tk.Frame):
         self.Relay_Pin    = 5
         self.Setup_Brightness = 20
         self.roi = np.zeros((0, 0))
+        self.Lift_Jump_Microsteps = 1000
+        self.Time_of_scavenge = 2.0*60.0
+        self.TOS_Dictionary = {"2 min" : 2.0*60.0,
+                               "5 min" : 5.0*60.0,
+                               "10 min" : 10.0*60.0}
+        self.waitTosThread = None
+        self.waitTos_stop = threading.Event()
         # Create application objects
         self.camera = Camera()
         self.imgAnalyzer = ImageAnalyzer()
@@ -113,10 +150,11 @@ class App(tk.Frame):
         ##################################################
         #Pneumatics window
         ##################################################
-        PneumaticFrame = tk.LabelFrame(AuxFrame, text="Pneumatics", 
+        PneumaticFrame = tk.LabelFrame(ControlFrame, text="Pneumatics", 
                                        width=self.window.winfo_screenwidth()/6,
                                        height=self.window.winfo_screenheight())
-        PneumaticFrame.pack()
+        PneumaticFrame.grid(row=0, column=40, padx=0, pady=0)
+        #PneumaticFrame.pack()
         PneumaticFrame.grid_propagate(False)
         #solenoid valve
         self.Relay_button_text = tk.StringVar()
@@ -124,6 +162,14 @@ class App(tk.Frame):
         self.Relay_button = tk.Button(PneumaticFrame, textvariable=self.Relay_button_text,
                                       command=self.Relay_callback)
         self.Relay_button.pack()
+        
+        self.TOSValue = tk.StringVar()
+        self.TOSbox = ttk.Combobox(PneumaticFrame, textvariable=self.TOSValue, width=10)
+        self.TOSbox['values'] = ('2 min', '5 min', '10 min')
+        self.TOSbox.current(0)
+        self.TOSbox.grid(row=0, column=0)
+        self.TOSbox.bind("<<ComboboxSelected>>", self.TOS_comboSelection_callback)
+        self.TOSbox.pack()
         
         
         ##################################################
@@ -148,42 +194,38 @@ class App(tk.Frame):
             MCFrame = tk.LabelFrame(ControlFrame, text="Motor Controller", 
                                     width=self.window.winfo_screenwidth()-self.window.winfo_screenheight(),
                                     height=self.window.winfo_screenheight())
-            MCFrame.grid(row=0, column=40, padx=0, pady=0)
+            MCFrame.grid(row=1, column=40, padx=0, pady=0)
             MCFrame.grid_propagate(False)
             
-            #self.control_mode = tk.StringVar()
-            #self.control_mode.set("speed")
-            #self.MCSpeedRadio = tk.Radiobutton(MCFrame, text="Speed",
-            #                                   variable=self.control_mode,
-            #                                   value="speed", command=self.MCDirRadio_callback)
-            #self.MCSpeedRadio.pack()
-            #self.MCSpeedRadio.select()
-            #self.MCPosRadio = tk.Radiobutton(MCFrame, text="Position",
-            #                                 variable=self.control_mode,
-            #                                 value="position", command=self.MCDirRadio_callback)
-            #self.MCPosRadio.pack()
+            ######## Speed Control ########
+            #self.MCSpeedSlider = tk.Scale(MCFrame, from_=0, to=self.motorController.ticT825.MAX_SPEED,
+            #                              resolution=1, state="normal", orient=tk.HORIZONTAL,
+            #                              command=self.MCSpeedSlider_callback)
+            #self.MCSpeedSlider.pack()
+            #
+            #self.dir_var = tk.StringVar()
+            #self.MCDownDirRadio = tk.Radiobutton(MCFrame, text="down",
+            #                                     variable=self.dir_var,
+            #                                     value='down', command=self.MCDirRadio_callback)
+            #self.MCDownDirRadio.pack()
+            #self.MCDownDirRadio.select()
+            #self.MCUpDirRadio = tk.Radiobutton(MCFrame, text="up",
+            #                                   variable=self.dir_var,
+            #                                   value='up', command=self.MCDirRadio_callback)
+            #self.MCUpDirRadio.pack()
+            #
+            #self.energize_button_text = tk.StringVar()
+            #self.energize_button_text.set("Energize")
+            #self.MCEnergize_button = tk.Button(MCFrame, textvariable=self.energize_button_text, state="active",
+            #                                   command=self.MCEnergize_callback)
+            #self.MCEnergize_button.pack()
             
-            self.MCSpeedSlider = tk.Scale(MCFrame, from_=0, to=self.motorController.ticT825.MAX_SPEED,
-                                          resolution=1, state="normal", orient=tk.HORIZONTAL,
-                                          command=self.MCSpeedSlider_callback)
-            self.MCSpeedSlider.pack()
-            
-            self.dir_var = tk.StringVar()
-            self.MCDownDirRadio = tk.Radiobutton(MCFrame, text="down",
-                                                 variable=self.dir_var,
-                                                 value='down', command=self.MCDirRadio_callback)
-            self.MCDownDirRadio.pack()
-            self.MCDownDirRadio.select()
-            self.MCUpDirRadio = tk.Radiobutton(MCFrame, text="up",
-                                               variable=self.dir_var,
-                                               value='up', command=self.MCDirRadio_callback)
-            self.MCUpDirRadio.pack()
-            
-            self.energize_button_text = tk.StringVar()
-            self.energize_button_text.set("Energize")
-            self.MCEnergize_button = tk.Button(MCFrame, textvariable=self.energize_button_text, state="active",
-                                               command=self.MCEnergize_callback)
-            self.MCEnergize_button.pack()
+            ######## Position Control ########
+            self.Lift_button_text = tk.StringVar()
+            self.Lift_button_text.set("Lift Up")
+            self.Lift_button = tk.Button(MCFrame, textvariable=self.Lift_button_text,
+                                          command=self.Lift_callback)
+            self.Lift_button.pack()
         
         ##################################################
         #Summary window
@@ -234,11 +276,15 @@ class App(tk.Frame):
     def on_closing(self):
         self.pi.set_PWM_dutycycle(self.LED_Pin_Top, 0)
         self.pi.write(self.Relay_Pin, 1)
-        self.pi.stop()
+        if self.waitTosThread is not None:
+            #self.waitTosThread.stop()
+            self.waitTos_stop.set()
+            self.waitTosThread.join(0.6)
         if self.motorController is not None:
             self.motorController.shutdown()
         if self.camera is not None:
             self.camera.shutdown()
+        self.pi.stop()
         self.window.destroy()
     
     
@@ -292,15 +338,38 @@ class App(tk.Frame):
         print("{0} creation".format(expertSys))
         # TODO: creation of proper Expert system
 
-
+    def TOS_comboSelection_callback(self, arg):
+        self.Time_of_scavenge = self.TOS_Dictionary[self.TOSbox.get()]
+    
     def Relay_callback(self):
         if(self.Relay_button_text.get() == "Air on"):
             self.pi.write(self.Relay_Pin, 0)
             self.Relay_button_text.set("Air off")
+            self.waitTosThread = relayThread(gpio=self.pi, 
+                                             pin=self.Relay_Pin, 
+                                             button_text=self.Relay_button_text, 
+                                             delay=self.Time_of_scavenge,
+                                             stop_event=self.waitTos_stop,
+                                             debug=False)
+            self.waitTosThread.start()
         elif(self.Relay_button_text.get() == "Air off"):
-            self.pi.write(self.Relay_Pin, 1)
             self.Relay_button_text.set("Air on")
+            #self.waitTosThread.stop()
+            self.waitTos_stop.set()
+            self.waitTosThread.join(0.6)
 
+    def Lift_callback(self):
+        if(self.Lift_button_text.get() == "Lift Up"):
+            self.Lift_button.config(state="disabled")
+            self.motorController.goToTargetPositionProcedure(self.Lift_Jump_Microsteps)
+            self.Lift_button.config(state="normal")
+            self.Lift_button_text.set("Lift Down")
+            
+        elif(self.Lift_button_text.get() == "Lift Down"):
+            self.Lift_button.config(state="disabled")
+            self.motorController.goToTargetPositionProcedure(0)
+            self.Lift_button.config(state="normal")
+            self.Lift_button_text.set("Lift Up")
 
 if __name__ == '__main__':
     # Set up GUI
