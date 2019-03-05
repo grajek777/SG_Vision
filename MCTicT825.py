@@ -6,7 +6,7 @@
 # Phase current: 0.6 A
 # Commands for Tic T825: https://www.pololu.com/docs/0J71/8
 
-import smbus
+import smbus2
 import time
 
 class ConstTicT825(object):
@@ -41,7 +41,7 @@ class MCTicT825(ConstTicT825):
     
     def __init__(self, addr):
         self.i2c_addr = addr
-        self.mc = smbus.SMBus(1)
+        self.mc = smbus2.SMBus(3)
         
         # set motor restrictions. The following commands will overwrite the data
         # kept in non-volatile memory to make sure that they are correct.
@@ -142,22 +142,43 @@ class MCTicT825(ConstTicT825):
         dict = {'Mixed': 0, 'Slow': 1, 'Fast': 2}
         self.mc.write_byte_data(self.i2c_addr, self.SET_DECAY_MODE, dict[mode])
 
-    def getVariablesBlock(self, length):
-        return self.mc.read_i2c_block_data(self.i2c_addr, self.GET_VARIABLE, length)
-        #return self.mc.read_i2c_block_data(self.i2c_addr, 0x00)
     
-    def getVariableByte(self):
-        return self.mc.read_byte_data(self.i2c_addr, self.GET_VARIABLE)
-    
-    def getVariableWord(self):
-        return self.mc.read_word_data(self.i2c_addr, self.GET_VARIABLE)
-
+    # reading varibales according to https://www.pololu.com/docs/0J71/12.9
+    # The below methods use smbus2 library and its repeated start transaction
+    def getVariables(self, offset, length):
+        write = smbus2.i2c_msg.write(self.i2c_addr, [0xA1, offset])
+        read = smbus2.i2c_msg.read(self.i2c_addr, length)
+        self.mc.i2c_rdwr(write, read)
+        return list(read)
+        
     def getCurrentPosition(self):
-        self.mc.write_i2c_block_data(self.i2c_addr, self.GET_VARIABLE, [0x22])
-        #self.mc.write_word_data(self.i2c_addr, self.GET_VARIABLE, 34)
-        #self.write32Bit(self.GET_VARIABLE, 34) #set offset for GET_VARIABLE command
-        dataBlock = self.getVariablesBlock(4)
-        #dataBlock = self.getVariableWord()
-        print(dataBlock)
-        return dataBlock
+        b = self.getVariables(0x22, 4)
+        position = b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24)
+        if position >= (1 << 31):
+          position -= (1 << 32)
+        return position
     
+    def getCurrentVelocity(self):
+        b = self.getVariables(0x26, 4)
+        velocity = b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24)
+        if velocity >= (1 << 31):
+          velocity -= (1 << 32)
+        return velocity
+    
+    def getTargetPosition(self):
+        b = self.getVariables(0x0A, 4)
+        position = b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24)
+        if position >= (1 << 31):
+          position -= (1 << 32)
+        return position
+    
+    def getTargetVelocity(self):
+        b = self.getVariables(0x0E, 4)
+        velocity = b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24)
+        if velocity >= (1 << 31):
+          velocity -= (1 << 32)
+        return velocity
+    
+    def getPlanningMode(self):
+        b = self.getVariables(0x09, 1)
+        return b

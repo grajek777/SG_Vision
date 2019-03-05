@@ -27,6 +27,7 @@ class MotorController(object):
         try:
             return cls(keep_alive)
         except IOError as e:
+            print(e)
             return None
         
     def energizeMotor(self):
@@ -52,9 +53,9 @@ class MotorController(object):
             self.energizeMotor()
         time.sleep(0.2)
         self.goToTargetPosition(pos)
-        #self.ticT825.getCurrentPosition()
-        time.sleep(10.0) 
-        self.ticT825.getCurrentPosition()
+        while(self.ticT825.getCurrentPosition() != pos):
+            time.sleep(0.1)
+        time.sleep(0.5) 
         if pos==0:
             self.deenergizeMotor()
         
