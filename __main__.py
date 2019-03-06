@@ -84,7 +84,7 @@ class App(tk.Frame):
         self.Relay_Pin    = 5
         self.Setup_Brightness = 20
         self.roi = np.zeros((0, 0))
-        self.Lift_Jump_Microsteps = 1000
+        self.Lift_Jump_Microsteps = 500
         self.Time_of_scavenge = 2.0*60.0
         self.TOS_Dictionary = {"2 min" : 2.0*60.0,
                                "5 min" : 5.0*60.0,
@@ -107,6 +107,11 @@ class App(tk.Frame):
                             height=(self.window.winfo_screenheight()/5))
         AuxFrame.grid(row=0, column=0, padx=0, pady=0)
         AuxFrame.grid_propagate(False)
+        AuxFrame1 = tk.Frame(ControlFrame, 
+                            width=self.window.winfo_screenwidth()/6,
+                            height=(self.window.winfo_screenheight()/5))
+        AuxFrame1.grid(row=0, column=40, padx=0, pady=0)
+        AuxFrame1.grid_propagate(False)
         ##################################################
         #Expert System window
         ##################################################
@@ -150,11 +155,11 @@ class App(tk.Frame):
         ##################################################
         #Pneumatics window
         ##################################################
-        PneumaticFrame = tk.LabelFrame(ControlFrame, text="Pneumatics", 
+        PneumaticFrame = tk.LabelFrame(AuxFrame1, text="Pneumatics", 
                                        width=self.window.winfo_screenwidth()/6,
                                        height=self.window.winfo_screenheight())
-        PneumaticFrame.grid(row=0, column=40, padx=0, pady=0)
-        #PneumaticFrame.pack()
+        #PneumaticFrame.grid(row=0, column=40, padx=0, pady=0)
+        PneumaticFrame.pack()
         PneumaticFrame.grid_propagate(False)
         #solenoid valve
         self.Relay_button_text = tk.StringVar()
@@ -191,10 +196,11 @@ class App(tk.Frame):
         ##################################################
         # Motor Controller 
         if self.motorController is not None:
-            MCFrame = tk.LabelFrame(ControlFrame, text="Motor Controller", 
+            MCFrame = tk.LabelFrame(AuxFrame1, text="Motor Controller", 
                                     width=self.window.winfo_screenwidth()-self.window.winfo_screenheight(),
                                     height=self.window.winfo_screenheight())
-            MCFrame.grid(row=1, column=40, padx=0, pady=0)
+            #MCFrame.grid(row=1, column=40, padx=0, pady=0)
+            MCFrame.pack()
             MCFrame.grid_propagate(False)
             
             ######## Speed Control ########
@@ -226,6 +232,10 @@ class App(tk.Frame):
             self.Lift_button = tk.Button(MCFrame, textvariable=self.Lift_button_text,
                                           command=self.Lift_callback)
             self.Lift_button.pack()
+            self.LiftJumpSlider = tk.Scale(MCFrame, from_=500, to=8000,
+                                           resolution=10, state="normal", orient=tk.HORIZONTAL,
+                                           command=self.LiftJumpSlider_callback)
+            self.LiftJumpSlider.pack()
         
         ##################################################
         #Summary window
@@ -370,6 +380,10 @@ class App(tk.Frame):
             self.motorController.goToTargetPositionProcedure(0)
             self.Lift_button.config(state="normal")
             self.Lift_button_text.set("Lift Up")
+
+    def LiftJumpSlider_callback(self, arg1):
+        self.Lift_Jump_Microsteps = int(arg1)
+        
 
 if __name__ == '__main__':
     # Set up GUI
