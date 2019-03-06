@@ -6,6 +6,7 @@ class MotorController(object):
     
     def __init__(self, keep_alive=False):
         MC_i2c_addr = 0x0e
+        #dictionary which determines lift direction (depends on mechanic construction)
         self.dir_factor = {'down': 1, 'up': -1}
         try:
             self.ticT825 = MCTicT825(MC_i2c_addr)
@@ -51,9 +52,12 @@ class MotorController(object):
     def goToTargetPositionProcedure(self, pos):
         if not(pos==0):
             self.energizeMotor()
-        time.sleep(0.2)
-        self.goToTargetPosition(pos)
-        while(self.ticT825.getCurrentPosition() != pos):
+            self.direction = "up"
+        else:
+            self.direction = "down"
+        time.sleep(0.2) 
+        self.goToTargetPosition(pos*self.dir_factor[self.direction])
+        while(self.ticT825.getCurrentPosition() != pos*self.dir_factor[self.direction]):
             time.sleep(0.1)
         time.sleep(0.5) 
         if pos==0:
@@ -68,8 +72,10 @@ class MotorController(object):
             self.keepAliveThread.stop()
             self.keepAliveThread.join()
         
+        # speed control
         self.setTargetMotorVelo(0)
         self.updateMotorDirection('down')
+        #position control 
         if not(self.position==0):
             self.goToTargetPositionProcedure(0)
         self.deenergizeMotor()
