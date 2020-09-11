@@ -32,9 +32,9 @@ class ConstTicT825(object):
     GET_VARIABLE_AND_CLR_ERRORS=0xA2
     GET_SETTING=0xA8
     # motor parameters
-    MAX_SPEED=2000000
+    MAX_SPEED=8000000
     MAX_ACC=40000
-    MAX_CURRENT=14
+    MAX_CURRENT=15
     MC_CMD_TIMEOUT=1.0
 
 class MCTicT825(ConstTicT825):
