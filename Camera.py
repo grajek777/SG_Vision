@@ -18,7 +18,7 @@ class Camera(object):
             os.chdir ("/home/pi/python_programs/SG_Vision/Saved_Photos")
         except IOError as e:
             self.camera = None
-            print "I/O error({0}): {1} of RPI Camera".format(e.errno, e.strerror)
+            print("I/O error({0}): {1} of RPI Camera".format(e.errno, e.strerror))
             raise
     
     def takePhoto(self, save=0):

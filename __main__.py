@@ -2,9 +2,9 @@
 #!/usr/bin/python
 import pigpio
 import time
-import Tkinter as tk
+import tkinter as tk
 import numpy as np
-import ttk
+from tkinter import ttk
 import os
 import time
 import threading
@@ -35,7 +35,7 @@ class relayThread (threading.Thread):
     def waitTime(self):
         for i in range(int(self.delay*2)):
             if self.debug:
-                print "%s" % (0.5*i)
+                print("{s}".format(s=(0.5*i)))
             time.sleep(0.5)
             if self.stop_event.is_set():
                 break
