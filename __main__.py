@@ -2,9 +2,9 @@
 #!/usr/bin/python
 import pigpio
 import time
-import tkinter as tk
-import numpy as np
-from tkinter import ttk
+import Tkinter as tk
+import numpy as np 
+import ttk
 import os
 import time
 import threading
@@ -15,6 +15,7 @@ from ImageAnalyzer import *
 from MotorController import *
 import camera_utils as cam_util
 from Tix import Tk
+from subprocess import call
 
 #import sys
 #sys.path.append(r'/home/pi/pysrc')
@@ -62,6 +63,9 @@ class LogoScreen(tk.Toplevel):
 class App(tk.Frame):
 
     def __init__(self, window):
+        # save name of LedRing path which needs to be run in python3
+        self.led_ring_script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                                      "LedRing.py")
         logo_w = window.winfo_screenwidth()
         logo_h = window.winfo_screenheight()/3
         self.logo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
@@ -80,7 +84,7 @@ class App(tk.Frame):
         self.after(5000,self.logo.destroy)
         
         self.window = window
-        self.LED_Pin_Top  = 18
+        #self.LED_Pin_Top  = 18
         self.Relay_Pin    = 5
         self.Setup_Brightness = 20
         self.roi = np.zeros((0, 0))
@@ -139,9 +143,9 @@ class App(tk.Frame):
         CameraFrame.grid(row=0, column=10, padx=0, pady=0)
         CameraFrame.grid_propagate(False)
         #Find ROI Button
-        self.FROI_button = tk.Button(CameraFrame, text="Find ROI",
-                                     command=self.FindROI_callback)
-        self.FROI_button.pack()
+        #self.FROI_button = tk.Button(CameraFrame, text="Find ROI",
+        #                             command=self.FindROI_callback)
+        #self.FROI_button.pack()
         
         #Take Photo
         self.savePhoto = tk.IntVar()
@@ -181,15 +185,16 @@ class App(tk.Frame):
         #LED window
         ##################################################
         #Slider knob for TOP LED brightness
-        TopLEDFrame = tk.LabelFrame(AuxFrame, text="TOP LED brightness", 
-                                    width=self.window.winfo_screenwidth()/6,
-                                    height=self.window.winfo_screenheight())
-        TopLEDFrame.pack()
-        TopLEDFrame.grid_propagate(False)
-        self.TopLEDSlider = tk.Scale(TopLEDFrame, from_=0, to=255,
-                                     resolution=1, state="normal", orient=tk.HORIZONTAL,
-                                     command=self.TopLEDSlider_callback)
-        self.TopLEDSlider.pack()
+        LedRingFrame = tk.LabelFrame(AuxFrame, text="LED RING", 
+                                     width=self.window.winfo_screenwidth()/6,
+                                     height=self.window.winfo_screenheight())
+        LedRingFrame.pack()
+        LedRingFrame.grid_propagate(False)
+        self.LedRing_button_text = tk.StringVar()
+        self.LedRing_button_text.set("LED on")
+        self.LedRing_button = tk.Button(LedRingFrame, textvariable=self.LedRing_button_text,
+                                        command=self.LedRing_callback)
+        self.LedRing_button.pack()
         
         ##################################################
         #Motor Controller  window
@@ -232,10 +237,6 @@ class App(tk.Frame):
             self.Lift_button = tk.Button(MCFrame, textvariable=self.Lift_button_text,
                                           command=self.Lift_callback)
             self.Lift_button.pack()
-            #self.LiftJumpSlider = tk.Scale(MCFrame, from_=500, to=8000,
-            #                               resolution=10, state="normal", orient=tk.HORIZONTAL,
-            #                               command=self.LiftJumpSlider_callback)
-            #self.LiftJumpSlider.pack()
         
         ##################################################
         #Summary window
@@ -276,15 +277,12 @@ class App(tk.Frame):
         
         # Setup GPIO 
         self.pi = pigpio.pi()
-        self.pi.set_mode(self.LED_Pin_Top, pigpio.OUTPUT)
-        self.pi.set_PWM_range(self.LED_Pin_Top, 255)
-        self.pi.set_PWM_dutycycle(self.LED_Pin_Top, 0)
         self.pi.set_mode(self.Relay_Pin, pigpio.OUTPUT)
         self.pi.write(self.Relay_Pin, 1)
     
     
     def on_closing(self):
-        self.pi.set_PWM_dutycycle(self.LED_Pin_Top, 0)
+        exit_code = call("sudo python3 {0} --turn off".format(self.led_ring_script_path), shell=True)
         self.pi.write(self.Relay_Pin, 1)
         if self.waitTosThread is not None:
             #self.waitTosThread.stop()
@@ -298,19 +296,19 @@ class App(tk.Frame):
         self.window.destroy()
     
     
-    def FindROI_callback(self):
-        #Set top LED to setup phase
-        self.pi.set_PWM_dutycycle(self.LED_Pin_Top, self.Setup_Brightness)
-        time.sleep(1.0)
-        temp_image = self.camera.takePhoto()
-        #search for ROI
-        self.roi = np.zeros((0, 0))
-        self.roi = self.imgAnalyzer.findROI(temp_image)
-        #turn back to default setting
-        self.pi.set_PWM_dutycycle(self.LED_Pin_Top, 0)
-        #enable widgets
-        self.TP_button.config(state="normal")
-        self.TopLEDSlider.config(state="normal")
+    #def FindROI_callback(self):
+    #    #Set top LED to setup phase
+    #    self.pi.set_PWM_dutycycle(self.LED_Pin_Top, self.Setup_Brightness)
+    #    time.sleep(1.0)
+    #    temp_image = self.camera.takePhoto()
+    #    #search for ROI
+    #    self.roi = np.zeros((0, 0))
+    #    self.roi = self.imgAnalyzer.findROI(temp_image)
+    #    #turn back to default setting
+    #    self.pi.set_PWM_dutycycle(self.LED_Pin_Top, 0)
+    #    #enable widgets
+    #    self.TP_button.config(state="normal")
+    #    self.TopLEDSlider.config(state="normal")
 
 
     def TakePhoto_callback(self):
@@ -321,11 +319,6 @@ class App(tk.Frame):
         self.ResultLabel.config(text=MFColor, fg="black")
         self.SaturationLabel.config(text="{:.2f}".format(Saturation), fg="black")
     
-
-    def TopLEDSlider_callback(self, arg1):
-        self.pi.set_PWM_dutycycle(self.LED_Pin_Top, arg1)
-    
-
     def MCSpeedSlider_callback(self, arg1):
         self.motorController.setTargetMotorVelo(int(arg1))
     
@@ -351,6 +344,14 @@ class App(tk.Frame):
     def TOS_comboSelection_callback(self, arg):
         self.Time_of_scavenge = self.TOS_Dictionary[self.TOSbox.get()]
     
+    def LedRing_callback(self):
+        if(self.LedRing_button_text.get() == "LED on"):
+            self.LedRing_button_text.set("LED off")
+            exit_code = call("sudo python3 {0} --turn on".format(self.led_ring_script_path), shell=True)
+        elif(self.LedRing_button_text.get() == "LED off"):
+            self.LedRing_button_text.set("LED on")
+            exit_code = call("sudo python3 {0} --turn off".format(self.led_ring_script_path), shell=True)
+    
     def Relay_callback(self):
         if(self.Relay_button_text.get() == "Air on"):
             self.pi.write(self.Relay_Pin, 0)
@@ -364,7 +365,6 @@ class App(tk.Frame):
             self.waitTosThread.start()
         elif(self.Relay_button_text.get() == "Air off"):
             self.Relay_button_text.set("Air on")
-            #self.waitTosThread.stop()
             self.waitTos_stop.set()
             self.waitTosThread.join(0.6)
 
