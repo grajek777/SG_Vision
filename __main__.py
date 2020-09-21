@@ -152,8 +152,8 @@ class App(tk.Frame):
         self.SavePhotoCheckBox = tk.Checkbutton(CameraFrame, text="Save photo", 
                                                 variable=self.savePhoto)
         self.SavePhotoCheckBox.pack()
-        self.TP_button = tk.Button(CameraFrame, text="Take a Photo", state="disabled",
-                              command=self.TakePhoto_callback)
+        self.TP_button = tk.Button(CameraFrame, text="Take a Photo", state="normal",
+                                   command=self.TakePhoto_callback)
         self.TP_button.pack()
         
         ##################################################

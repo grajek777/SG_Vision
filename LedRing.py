@@ -17,9 +17,9 @@ def main(argv):
             turn = arg
 
     if turn == "on":
-       pixels[0] = (255, 255, 255)
+       pixels.fill((255, 255, 255))
     elif turn == "off":
-       pixels[0] = (0, 0, 0)
+       pixels.fill((0, 0, 0))
 
 if __name__ == "__main__":
     main(sys.argv[1:])

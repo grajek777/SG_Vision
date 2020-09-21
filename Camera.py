@@ -24,7 +24,7 @@ class Camera(object):
     def takePhoto(self, save=0):
         rawCapture = PiRGBArray(self.camera, size=(640, 480))
         #allow the camera to warmup
-        time.sleep(0.1)
+        time.sleep(0.2)
         #grab an image from the camera
         self.camera.capture(rawCapture, format="bgr")
         temp_image = rawCapture.array
