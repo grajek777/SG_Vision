@@ -9,8 +9,9 @@ class Camera(object):
     
     def __init__(self):
         try:
+            # check if camera exists
             self.camera = PiCamera()
-            self.camera.resolution = (640, 480)
+            self.camera.close()
             # create a default directory where photos will be stored
             self.directory = "/home/pi/python_programs/SG_Vision/Saved_Photos"
             if not os.path.exists(self.directory):
@@ -22,12 +23,15 @@ class Camera(object):
             raise
     
     def takePhoto(self, save=0):
-        rawCapture = PiRGBArray(self.camera, size=(640, 480))
+        self.camera = PiCamera()
+        self.camera.resolution = (640, 480)
         #allow the camera to warmup
         time.sleep(0.2)
+        rawCapture = PiRGBArray(self.camera, size=(640, 480))
         #grab an image from the camera
         self.camera.capture(rawCapture, format="bgr")
         temp_image = rawCapture.array
+        self.camera.close()
         if save==1:
             photoname = datetime.datetime.now().strftime("%Y-%m-%d-%H.%M.%S.jpg")
             cv2.imwrite(photoname,temp_image)

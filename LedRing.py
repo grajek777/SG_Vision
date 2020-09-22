@@ -4,7 +4,7 @@ import sys, getopt
 
 def main(argv):
     turn = ''
-    pixels = neopixel.NeoPixel(board.D18, 16)
+    pixels = neopixel.NeoPixel(board.D18, 16, brightness=0.1)
     try:
         arguments, values = getopt.getopt(argv,"hi:o:",["turn="])
     except getopt.error as err:
