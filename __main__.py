@@ -84,11 +84,30 @@ class App(tk.Frame):
         self.after(5000,self.logo.destroy)
         
         self.window = window
-        #self.LED_Pin_Top  = 18
         self.Relay_Pin    = 5
         self.Setup_Brightness = 20
-        self.roi = np.zeros((0, 0))
         self.Lift_Jump_Microsteps = 6700
+        #self.roi = np.zeros((0, 0))
+        # xx and yy are 200x200 tables containing the x and y coordinates as values
+        # mgrid is a mesh creation helper
+        #xx, yy = np.mgrid[:640, :480]
+        # circles contains the squared distance to the (100, 100) point
+        # we are just using the circle equation learnt at school
+        #circle = (xx - 320) ** 2 + (yy - 240) ** 2
+        # donuts contains 1's and 0's organized in a donut shape
+        # you apply 2 thresholds on circle to define the shape
+        #self.roi = np.logical_and(circle < (100 + 60), circle > (100 - 60))
+        #self.roi = np.zeros([640, 480], dtype="uint8")
+        #for cnt in donut:
+        #     #tmp_cnt = np.int32(cnt)
+        #     ctr = np.array(cnt).reshape((-1,1,2)).astype(np.int32)
+        #     cv2.drawContours(self.roi,[ctr],0,(255,255,255),2)
+
+        #self.roi_base_out = np.zeros((640,480), np.uint8)
+        #self.roi_base_int = np.zeros((640,480), np.uint8)
+        #cv2.circle(self.roi_base_out,(640/2,480/2),150,1,thickness=-1)
+        #cv2.circle(self.roi_base_int,(640/2,480/2),100,1,thickness=-1)
+
         self.Time_of_scavenge = 2.0*60.0
         self.TOS_Dictionary = {"2 min" : 2.0*60.0,
                                "5 min" : 5.0*60.0,
@@ -294,25 +313,11 @@ class App(tk.Frame):
             self.camera.shutdown()
         self.pi.stop()
         self.window.destroy()
-    
-    
-    #def FindROI_callback(self):
-    #    #Set top LED to setup phase
-    #    self.pi.set_PWM_dutycycle(self.LED_Pin_Top, self.Setup_Brightness)
-    #    time.sleep(1.0)
-    #    temp_image = self.camera.takePhoto()
-    #    #search for ROI
-    #    self.roi = np.zeros((0, 0))
-    #    self.roi = self.imgAnalyzer.findROI(temp_image)
-    #    #turn back to default setting
-    #    self.pi.set_PWM_dutycycle(self.LED_Pin_Top, 0)
-    #    #enable widgets
-    #    self.TP_button.config(state="normal")
-    #    self.TopLEDSlider.config(state="normal")
-
 
     def TakePhoto_callback(self):
         temp_image = self.camera.takePhoto(self.savePhoto.get())
+        self.roi = np.zeros((0, 0))
+        self.roi = self.imgAnalyzer.findROI_2(temp_image)
         cam_util.show_frame(temp_image, self.roi, self.lmain)
         (MFColor, Saturation) = self.imgAnalyzer.colorDetection(temp_image, self.roi)
         #set results into the label objects
