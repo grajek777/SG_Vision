@@ -88,7 +88,7 @@ class App(tk.Frame):
         self.Relay_Pin    = 5
         self.Setup_Brightness = 20
         self.roi = np.zeros((0, 0))
-        self.Lift_Jump_Microsteps = 8500
+        self.Lift_Jump_Microsteps = 6700
         self.Time_of_scavenge = 2.0*60.0
         self.TOS_Dictionary = {"2 min" : 2.0*60.0,
                                "5 min" : 5.0*60.0,
