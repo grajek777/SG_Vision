@@ -45,21 +45,25 @@ class ImageAnalyzer(object):
         #cv2.imshow('HSV thresholded Image',hsv_threshold)
         
         medianFiltered = cv2.medianBlur(saturation,5)
-        #cv2.imshow('Median Filtered Image',medianFiltered)
-        #cv2.waitKey(0) 
+        cv2.imshow('Median Filtered Image',medianFiltered)
+        cv2.waitKey(0) 
+        
 
+        edges = cv2.Canny(medianFiltered, 20, 100, L2gradient=True)
+        cv2.imshow('Canny Image',edges)
+        cv2.waitKey(0)
         #retval, thresholded = cv2.threshold(medianFiltered, 230, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        thresholded = cv2.adaptiveThreshold(medianFiltered, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 17, 2)
+        #thresholded = cv2.adaptiveThreshold(medianFiltered, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 17, 2)
         #cv2.imshow('Thresholded Image',thresholded)
         #cv2.waitKey(0)
 
         # mask all but the central square
         c_x = int(self.width/2)
         c_y = int(self.high/2)
-        masked = np.zeros(thresholded.shape,np.uint8)
-        masked[(c_y-85):(c_y+85),(c_x-100):(c_x+100)] = thresholded[(c_y-85):(c_y+85),(c_x-100):(c_x+100)]
-        #cv2.imshow('Masked Image',masked)
-        #cv2.waitKey(0)
+        masked = np.zeros(edges.shape,np.uint8)
+        masked[(c_y-75):(c_y+100),(c_x-100):(c_x+100)] = edges[(c_y-75):(c_y+100),(c_x-100):(c_x+100)]
+        cv2.imshow('Masked Image',masked)
+        cv2.waitKey(0)
         #crop_img = medianFiltered[(c_y-85):(c_y+85),(c_x-100):(c_x+100)]
         #cv2.imshow('Crop Image',crop_img)
         #cv2.waitKey(0) 

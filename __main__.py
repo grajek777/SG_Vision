@@ -163,10 +163,6 @@ class App(tk.Frame):
                                     height=self.window.winfo_screenheight())
         CameraFrame.grid(row=0, column=10, padx=0, pady=0)
         CameraFrame.grid_propagate(False)
-        #Find ROI Button
-        #self.FROI_button = tk.Button(CameraFrame, text="Find ROI",
-        #                             command=self.FindROI_callback)
-        #self.FROI_button.pack()
         
         #Take Photo
         self.savePhoto = tk.IntVar()
