@@ -31,46 +31,44 @@ class ImageAnalyzer(object):
     def findROI_2(self, temp):
         
         cv2image = cv2.resize(temp, (self.width, self.high))
-        # first phase of finding ROI -> mask all but the central square
+
+        hsv = cv2.cvtColor(cv2image, cv2.COLOR_BGR2HSV)
+        #cv2.imshow('HSV Image',hsv)
+        #cv2.waitKey(0)
+
+        hue, saturation, value = cv2.split(hsv)
+        #cv2.imshow('Saturation Image',saturation)
+        #cv2.imshow('Hue Image',hue)
+        #cv2.imshow('Value Image',value)
+        #cv2.waitKey(0)
+        #hsv_threshold = cv2.inRange(hsv, (0, 40, 110), (180, 255, 255))
+        #cv2.imshow('HSV thresholded Image',hsv_threshold)
+        
+        medianFiltered = cv2.medianBlur(saturation,5)
+        #cv2.imshow('Median Filtered Image',medianFiltered)
+        #cv2.waitKey(0) 
+
+        #retval, thresholded = cv2.threshold(medianFiltered, 230, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        thresholded = cv2.adaptiveThreshold(medianFiltered, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 17, 2)
+        #cv2.imshow('Thresholded Image',thresholded)
+        #cv2.waitKey(0)
+
+        # mask all but the central square
         c_x = int(self.width/2)
         c_y = int(self.high/2)
-        masked = np.zeros(cv2image.shape,np.uint8)
-        masked[(c_y-85):(c_y+85),(c_x-100):(c_x+100)] = cv2image[(c_y-85):(c_y+85),(c_x-100):(c_x+100)]
-        cv2.imshow('Masked Image',masked)
-        cv2.waitKey(0)
-
-        hsv = cv2.cvtColor(masked, cv2.COLOR_BGR2HSV)
-        cv2.imshow('HSV Image',hsv)
-        cv2.waitKey(0)
-
-        hue ,saturation ,value = cv2.split(hsv)
-        cv2.imshow('Saturation Image',saturation)
-        #cv2.imshow('Hue Image',hue)
-        cv2.waitKey(0)
-
-        retval, thresholded = cv2.threshold(saturation, 230, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        cv2.imshow('Thresholded Image',thresholded)
-        cv2.waitKey(0)
-
-        medianFiltered = cv2.medianBlur(thresholded,3)
-        cv2.imshow('Median Filtered Image',medianFiltered)
-        cv2.waitKey(0) 
-        cnts = cv2.findContours(medianFiltered.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        masked = np.zeros(thresholded.shape,np.uint8)
+        masked[(c_y-85):(c_y+85),(c_x-100):(c_x+100)] = thresholded[(c_y-85):(c_y+85),(c_x-100):(c_x+100)]
+        #cv2.imshow('Masked Image',masked)
+        #cv2.waitKey(0)
+        #crop_img = medianFiltered[(c_y-85):(c_y+85),(c_x-100):(c_x+100)]
+        #cv2.imshow('Crop Image',crop_img)
+        #cv2.waitKey(0) 
+        cnts = cv2.findContours(masked.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         #gaussianFiltered = cv2.GaussianBlur(thresholded, (5, 5), 0)
         #cv2.imshow('Gaussian Filtered Image',gaussianFiltered)
         #cv2.waitKey(0) 
         #cnts = cv2.findContours(gaussianFiltered.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         #cnts = cv2.findContours(thresholded.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        #for c in cnts:
-        #  # compute the center of the contour
-        #  #M = cv2.moments(c)
-        #  #cX = int(M["m10"] / M["m00"])
-        #  #cY = int(M["m01"] / M["m00"])
-        #  cv2.drawContours(cv2image, c, -1, (0, 255, 0), -1)
-        #  #first = cv2.drawContours(cv2image, [c], -1, (0, 255, 0), 2)
-        #  #second =cv2.circle(cv2image, (cX, cY),1 , (255, 255, 255), -1)
-
 
         #cv2.imshow('Objects Detected',cv2image)
         #cv2.waitKey(0)
@@ -121,6 +119,7 @@ class ImageAnalyzer(object):
                         noPix += 1
                         result_array[color] += 1
                         Saturation_array[color] += img_HSV.item(i, j, 1)
+                        #print("{0} {1} {2}".format((img_HSV.item(i, j, 0)),(img_HSV.item(i, j, 1)),(img_HSV.item(i, j, 2))))
                         # sum values in channels to compute average
                         HueAvg += img_HSV.item(i, j, 0)
                         SatAvg += img_HSV.item(i, j, 1)
@@ -158,8 +157,8 @@ class ImageAnalyzer(object):
         cv2.drawContours(mask, c, -1, 255, -1)
         roi = cv2.bitwise_and(cv2image, cv2image, mask=mask)
     
-        cv2.imshow("roi", roi)
-        cv2.waitKey(0)
+        #cv2.imshow("roi", roi)
+        #cv2.waitKey(0)
     
         img_HSV = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
         (MFColor, MFSaturation, HueAvg, SatAvg, ValAvg) = self.analyzeImageHSV(img_HSV)

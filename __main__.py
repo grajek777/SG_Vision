@@ -24,9 +24,10 @@ from subprocess import call
                                  # of Eclipse host machine
 
 class relayThread (threading.Thread):
-    def __init__(self, gpio, pin, button_text, stop_event, delay=(2.0*60.0), debug=False):
+    def __init__(self, gpio, pin, button_text, stop_event, off_state, delay=(2.0*60.0), debug=False):
         threading.Thread.__init__(self)
         self.delay = delay
+        self.off_state = off_state
         self.gpio = gpio
         self.pin = pin
         self.button_text = button_text
@@ -41,7 +42,7 @@ class relayThread (threading.Thread):
             if self.stop_event.is_set():
                 break
         self.button_text.set("Air on")
-        self.gpio.write(self.pin, 1)
+        self.gpio.write(self.pin, self.off_state)
         self.stop_event.clear()
     
     #def stop(self):
@@ -85,6 +86,8 @@ class App(tk.Frame):
         
         self.window = window
         self.Relay_Pin    = 5
+        self.Relay_On     = 1
+        self.Relay_Off    = 0
         self.Setup_Brightness = 20
         self.Lift_Jump_Microsteps = 6700
         #self.roi = np.zeros((0, 0))
@@ -107,7 +110,6 @@ class App(tk.Frame):
         #self.roi_base_int = np.zeros((640,480), np.uint8)
         #cv2.circle(self.roi_base_out,(640/2,480/2),150,1,thickness=-1)
         #cv2.circle(self.roi_base_int,(640/2,480/2),100,1,thickness=-1)
-
         self.Time_of_scavenge = 2.0*60.0
         self.TOS_Dictionary = {"2 min" : 2.0*60.0,
                                "5 min" : 5.0*60.0,
@@ -297,12 +299,12 @@ class App(tk.Frame):
         # Setup GPIO 
         self.pi = pigpio.pi()
         self.pi.set_mode(self.Relay_Pin, pigpio.OUTPUT)
-        self.pi.write(self.Relay_Pin, 1)
+        self.pi.write(self.Relay_Pin, self.Relay_Off)
     
     
     def on_closing(self):
         exit_code = call("sudo python3 {0} --turn off".format(self.led_ring_script_path), shell=True)
-        self.pi.write(self.Relay_Pin, 1)
+        self.pi.write(self.Relay_Pin, self.Relay_Off)
         if self.waitTosThread is not None:
             #self.waitTosThread.stop()
             self.waitTos_stop.set()
@@ -359,12 +361,13 @@ class App(tk.Frame):
     
     def Relay_callback(self):
         if(self.Relay_button_text.get() == "Air on"):
-            self.pi.write(self.Relay_Pin, 0)
+            self.pi.write(self.Relay_Pin, self.Relay_On)
             self.Relay_button_text.set("Air off")
             self.waitTosThread = relayThread(gpio=self.pi, 
                                              pin=self.Relay_Pin, 
                                              button_text=self.Relay_button_text, 
                                              delay=self.Time_of_scavenge,
+                                             off_state=self.Relay_Off,
                                              stop_event=self.waitTos_stop,
                                              debug=False)
             self.waitTosThread.start()
