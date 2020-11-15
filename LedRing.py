@@ -4,9 +4,9 @@ import sys, getopt
 
 def main(argv):
     turn = ''
-    pixels = neopixel.NeoPixel(board.D18, 16, brightness=0.1)
+    bright = 0.1
     try:
-        arguments, values = getopt.getopt(argv,"hi:o:",["turn="])
+        arguments, values = getopt.getopt(argv,"hi:o:",["turn=", "brightness="])
     except getopt.error as err:
         # Output error, and return with an error code
         print (str(err))
@@ -15,7 +15,10 @@ def main(argv):
     for opt, arg in arguments:
         if opt in ("-t", "--turn"):
             turn = arg
+        elif opt in ("-b", "--brightness"):
+            bright = arg
 
+    pixels = neopixel.NeoPixel(board.D18, 16, brightness=float(bright))
     if turn == "on":
        pixels.fill((255, 255, 255))
     elif turn == "off":
