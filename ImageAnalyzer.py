@@ -44,17 +44,24 @@ class ImageAnalyzer(object):
         #hsv_threshold = cv2.inRange(hsv, (0, 40, 110), (180, 255, 255))
         #cv2.imshow('HSV thresholded Image',hsv_threshold)
         
-        medianFiltered = cv2.medianBlur(saturation,5)
-        cv2.imshow('Median Filtered Image',medianFiltered)
-        cv2.waitKey(0) 
+        #medianFiltered = cv2.medianBlur(saturation,5)
+        #cv2.imshow('Median Filtered Image',medianFiltered)
+        #cv2.waitKey(0) 
         
+        bilateralFiltered = cv2.bilateralFilter(saturation,7,75,75)
+        cv2.imshow('Bilateral Filtered Image',bilateralFiltered)
+        cv2.waitKey(0)
 
-        edges = cv2.Canny(medianFiltered, 20, 100, L2gradient=True)
+        edges = cv2.Canny(bilateralFiltered, 10, 120, L2gradient=True)
         cv2.imshow('Canny Image',edges)
         cv2.waitKey(0)
         #retval, thresholded = cv2.threshold(medianFiltered, 230, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         #thresholded = cv2.adaptiveThreshold(medianFiltered, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 17, 2)
         #cv2.imshow('Thresholded Image',thresholded)
+        #cv2.waitKey(0)
+        
+        #edges2 = cv2.Canny(thresholded, 20, 100, L2gradient=True)
+        #cv2.imshow('Canny Image 2',edges2)
         #cv2.waitKey(0)
 
         # mask all but the central square
@@ -161,8 +168,8 @@ class ImageAnalyzer(object):
         cv2.drawContours(mask, c, -1, 255, -1)
         roi = cv2.bitwise_and(cv2image, cv2image, mask=mask)
     
-        #cv2.imshow("roi", roi)
-        #cv2.waitKey(0)
+        cv2.imshow("roi", roi)
+        cv2.waitKey(0)
     
         img_HSV = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
         (MFColor, MFSaturation, HueAvg, SatAvg, ValAvg) = self.analyzeImageHSV(img_HSV)

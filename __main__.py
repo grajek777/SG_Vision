@@ -88,7 +88,6 @@ class App(tk.Frame):
         self.Relay_Pin    = 5
         self.Relay_On     = 1
         self.Relay_Off    = 0
-        self.Setup_Brightness = 20
         self.Lift_Jump_Microsteps = 6700
         #self.roi = np.zeros((0, 0))
         # xx and yy are 200x200 tables containing the x and y coordinates as values
@@ -212,6 +211,10 @@ class App(tk.Frame):
         self.LedRing_button = tk.Button(LedRingFrame, textvariable=self.LedRing_button_text,
                                         command=self.LedRing_callback)
         self.LedRing_button.pack()
+        self.LED_Brightness = tk.Scale(LedRingFrame, from_=0.0, to=1.0, resolution=0.1, orient=tk.HORIZONTAL)
+        self.LED_Brightness.config(state="normal")
+        self.LED_Brightness.set(0.1)
+        self.LED_Brightness.pack()
         
         ##################################################
         #Motor Controller  window
@@ -350,9 +353,11 @@ class App(tk.Frame):
     def LedRing_callback(self):
         if(self.LedRing_button_text.get() == "LED on"):
             self.LedRing_button_text.set("LED off")
-            exit_code = call("sudo python3 {0} --turn on".format(self.led_ring_script_path), shell=True)
+            self.LED_Brightness.config(state="disabled")
+            exit_code = call("sudo python3 {0} --turn on --brightness {1}".format(self.led_ring_script_path, float(self.LED_Brightness.get())), shell=True)
         elif(self.LedRing_button_text.get() == "LED off"):
             self.LedRing_button_text.set("LED on")
+            self.LED_Brightness.config(state="normal")
             exit_code = call("sudo python3 {0} --turn off".format(self.led_ring_script_path), shell=True)
     
     def Relay_callback(self):
