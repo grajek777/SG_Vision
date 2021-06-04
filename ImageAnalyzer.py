@@ -49,12 +49,12 @@ class ImageAnalyzer(object):
         #cv2.waitKey(0) 
         
         bilateralFiltered = cv2.bilateralFilter(saturation,7,75,75)
-        cv2.imshow('Bilateral Filtered Image',bilateralFiltered)
-        cv2.waitKey(0)
+        #cv2.imshow('Bilateral Filtered Image',bilateralFiltered)
+        #cv2.waitKey(0)
 
         edges = cv2.Canny(bilateralFiltered, 10, 120, L2gradient=True)
-        cv2.imshow('Canny Image',edges)
-        cv2.waitKey(0)
+        #cv2.imshow('Canny Image',edges)
+        #cv2.waitKey(0)
         #retval, thresholded = cv2.threshold(medianFiltered, 230, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         #thresholded = cv2.adaptiveThreshold(medianFiltered, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 17, 2)
         #cv2.imshow('Thresholded Image',thresholded)
@@ -69,8 +69,8 @@ class ImageAnalyzer(object):
         c_y = int(self.high/2)
         masked = np.zeros(edges.shape,np.uint8)
         masked[(c_y-75):(c_y+100),(c_x-100):(c_x+100)] = edges[(c_y-75):(c_y+100),(c_x-100):(c_x+100)]
-        cv2.imshow('Masked Image',masked)
-        cv2.waitKey(0)
+        #cv2.imshow('Masked Image',masked)
+        #cv2.waitKey(0)
         #crop_img = medianFiltered[(c_y-85):(c_y+85),(c_x-100):(c_x+100)]
         #cv2.imshow('Crop Image',crop_img)
         #cv2.waitKey(0) 
@@ -168,8 +168,8 @@ class ImageAnalyzer(object):
         cv2.drawContours(mask, c, -1, 255, -1)
         roi = cv2.bitwise_and(cv2image, cv2image, mask=mask)
     
-        cv2.imshow("roi", roi)
-        cv2.waitKey(0)
+        #cv2.imshow("roi", roi)
+        #cv2.waitKey(0)
     
         img_HSV = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
         (MFColor, MFSaturation, HueAvg, SatAvg, ValAvg) = self.analyzeImageHSV(img_HSV)

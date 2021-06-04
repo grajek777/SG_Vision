@@ -88,7 +88,7 @@ class App(tk.Frame):
         self.Relay_Pin    = 5
         self.Relay_On     = 1
         self.Relay_Off    = 0
-        self.Lift_Jump_Microsteps = 6700
+        self.Lift_Jump_Microsteps = 6500
         #self.roi = np.zeros((0, 0))
         # xx and yy are 200x200 tables containing the x and y coordinates as values
         # mgrid is a mesh creation helper
